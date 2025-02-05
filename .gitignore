@@ -20,3 +20,4 @@ go.work
 .vscode
 *.swp
 *.swo
+.env
