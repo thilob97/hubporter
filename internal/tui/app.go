@@ -6,7 +6,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 
 	"github.com/thilob97/hubporter/internal/api"
 	"github.com/thilob97/hubporter/internal/models"
@@ -27,8 +26,6 @@ type App struct {
 
 // New creates a new TUI application
 func New(client *api.Client) *App {
-	//TODO: extract the table
-	// Initialize table columns
 	columns := []table.Column{
 		{Title: "ID", Width: 10},
 		{Title: "Name", Width: 40},
@@ -36,25 +33,7 @@ func New(client *api.Client) *App {
 		{Title: "Typ", Width: 20},
 	}
 
-	// Create and configure table
-	t := table.New(
-		table.WithColumns(columns),
-		table.WithFocused(true),
-		table.WithHeight(10),
-	)
-
-	// Set table styles
-	s := table.DefaultStyles()
-	s.Header = s.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("240")).
-		BorderBottom(true).
-		Bold(true)
-	s.Selected = s.Selected.
-		Foreground(lipgloss.Color("229")).
-		Background(lipgloss.Color("57")).
-		Bold(true)
-	t.SetStyles(s)
+	t := ui.TableStyle(columns)
 
 	// Create model and set table
 	model := ui.NewModel()
@@ -132,11 +111,29 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "r":
 			a.model.LastLog = fmt.Sprintf("Refreshing workflows...")
 			return a, a.Init()
+		case "tab", "1", "2":
+			if a.model.ActiveTab == ui.TabWorkflows {
+				a.model.ActiveTab = ui.TabSettings
+			} else {
+				a.model.ActiveTab = ui.TabWorkflows
+			}
+			a.model.LastLog = fmt.Sprintf("Switched to %s", a.getTabName())
 		}
 	}
 
 	a.model.Table, cmd = a.model.Table.Update(msg)
 	return a, cmd
+}
+
+func (a *App) getTabName() string {
+	switch a.model.ActiveTab {
+	case ui.TabWorkflows:
+		return "Workflows"
+	case ui.TabSettings:
+		return "Settings"
+	default:
+		return "Unknown"
+	}
 }
 
 // View implements tea.Model
@@ -147,11 +144,27 @@ func (a *App) View() string {
 
 	var sb strings.Builder
 
-	// Render table
-	sb.WriteString(ui.BaseStyle.Render(a.model.Table.View()))
+	// Render tabs
+	tabs := []string{"Workflows", "Settings"}
+	for i, tab := range tabs {
+		style := ui.TabStyle
+		if a.model.ActiveTab == ui.Tab(i) {
+			style = ui.ActiveTabStyle
+		}
+		sb.WriteString(style.Render(tab))
+	}
+	sb.WriteString("\n\n")
+
+	// Render content based on active tab
+	switch a.model.ActiveTab {
+	case ui.TabWorkflows:
+		sb.WriteString(ui.BaseStyle.Render(a.model.Table.View()))
+	case ui.TabSettings:
+		sb.WriteString("Settings view coming soon...")
+	}
 
 	// Help text
-	sb.WriteString("\nPress q to quit • ↑/k and ↓/j to navigate • enter to select\n")
+	sb.WriteString("\nPress q to quit • ↑/k and ↓/j to navigate • tab to switch views • enter to select\n")
 
 	// Log line
 	logText := "No action yet"
