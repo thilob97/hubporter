@@ -1,0 +1,22 @@
+# Binaries
+hubporter
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output files
+*.out
+
+# Go workspace file
+go.work
+
+# IDE specific files
+.idea
+.vscode
+*.swp
+*.swo
