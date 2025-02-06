@@ -5,7 +5,9 @@ go 1.23.0
 require github.com/charmbracelet/bubbletea v1.3.0
 
 require (
+	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
+	github.com/sahilm/fuzzy v0.1.1 // indirect
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
 )
 

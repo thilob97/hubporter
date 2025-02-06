@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/thilob97/hubporter/internal/api"
 	"github.com/thilob97/hubporter/internal/models"
@@ -26,18 +28,33 @@ type App struct {
 
 // New creates a new TUI application
 func New(client *api.Client) *App {
-	columns := []table.Column{
+	workflowColumns := []table.Column{
 		{Title: "ID", Width: 10},
 		{Title: "Name", Width: 40},
 		{Title: "Status", Width: 10},
 		{Title: "Typ", Width: 20},
 	}
 
-	t := ui.TableStyle(columns)
+	stagingTable := ui.TableStyle(workflowColumns)
+	productionTable := ui.TableStyle(workflowColumns)
 
 	// Create model and set table
 	model := ui.NewModel()
-	model.Table = t
+	model.Staging = stagingTable
+	model.Production = productionTable
+
+	settingsItems := []list.Item{
+		ui.NewSettingsItem("Test", "texsss"),
+		ui.NewSettingsItem("Test2", "texsss"),
+	}
+
+	settingsList := list.New(settingsItems, list.DefaultDelegate{}, 50, 10)
+	settingsList.Title = "Einstellungen"
+	settingsList.SetShowTitle(true)
+	settingsList.SetShowStatusBar(true)
+	settingsList.SetFilteringEnabled(false)
+
+	model.Settings = settingsList
 
 	return &App{
 		model:  model,
@@ -48,6 +65,7 @@ func New(client *api.Client) *App {
 // Init implements tea.Model
 func (a *App) Init() tea.Cmd {
 	return func() tea.Msg {
+		tea.SetWindowTitle("Hubporter")
 		workflows, err := a.client.GetWorkflows()
 		if err != nil {
 			return errMsg(err)
@@ -71,7 +89,7 @@ func (a *App) updateRows() {
 			w.Type,
 		}
 	}
-	a.model.Table.SetRows(rows)
+	a.model.Staging.SetRows(rows)
 }
 
 // Update implements tea.Model
@@ -121,7 +139,7 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	a.model.Table, cmd = a.model.Table.Update(msg)
+	a.model.Staging, cmd = a.model.Staging.Update(msg)
 	return a, cmd
 }
 
@@ -158,9 +176,16 @@ func (a *App) View() string {
 	// Render content based on active tab
 	switch a.model.ActiveTab {
 	case ui.TabWorkflows:
-		sb.WriteString(ui.BaseStyle.Render(a.model.Table.View()))
+		var views []string
+
+		views = append(views, ui.BaseStyle.Render(a.model.Staging.View()))
+		views = append(views, ui.BaseStyle.Render(a.model.Production.View()))
+
+		split := lipgloss.JoinHorizontal(0.2, views...)
+		sb.WriteString(split)
+
 	case ui.TabSettings:
-		sb.WriteString("Settings view coming soon...")
+		sb.WriteString(ui.BaseStyle.Render(a.model.Settings.View()))
 	}
 
 	// Help text

@@ -14,14 +14,21 @@ var (
 			Foreground(lipgloss.Color("yellow"))
 
 	TabStyle = lipgloss.NewStyle().
-			Border(lipgloss.NormalBorder(), false, false, true).
 			BorderForeground(lipgloss.Color("240")).
 			Padding(0, 1)
 
 	ActiveTabStyle = TabStyle.Copy().
-			Border(lipgloss.NormalBorder(), false, false, true).
 			BorderForeground(lipgloss.Color("36")).
 			Foreground(lipgloss.Color("36"))
+
+	titleStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#FFFDF5")).
+			Background(lipgloss.Color("#25A065")).
+			Padding(0, 1)
+
+	statusMessageStyle = lipgloss.NewStyle().
+				Foreground(lipgloss.AdaptiveColor{Light: "#04B575", Dark: "#04B575"}).
+				Render
 )
 
 func TableStyle(columns []table.Column) table.Model {
